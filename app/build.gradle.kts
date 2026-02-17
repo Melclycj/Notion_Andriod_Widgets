@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    jacoco
 }
 
 val localProperties = Properties().apply {
@@ -57,6 +58,44 @@ android {
         compose = true
         buildConfig = true
     }
+
+    @Suppress("UnstableApiUsage")
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(true)
+    }
+
+    val mainSrc = "${project.projectDir}/src/main/kotlin"
+    val debugTree = fileTree("${project.layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
+        exclude(
+            "**/R.class", "**/R\$*.class",
+            "**/BuildConfig.class",
+            "**/Manifest*.*",
+            "**/*_Hilt*.*",
+            "**/Hilt_*.*",
+            "**/*_Factory.*",
+            "**/*_MembersInjector.*",
+            "**/*Module_*.*",
+            "**/*_Impl*.*",
+            "**/*Database_Impl*.*"
+        )
+    }
+    val execData = fileTree(project.layout.buildDirectory.get()) {
+        include("jacoco/testDebugUnitTest.exec")
+    }
+
+    sourceDirectories.setFrom(files(mainSrc))
+    classDirectories.setFrom(files(debugTree))
+    executionData.setFrom(execData)
 }
 
 dependencies {
