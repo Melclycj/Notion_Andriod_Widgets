@@ -31,12 +31,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun DatabaseSelectScreen(
     onDatabaseSelected: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: DatabaseSelectViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(24.dp)
     ) {

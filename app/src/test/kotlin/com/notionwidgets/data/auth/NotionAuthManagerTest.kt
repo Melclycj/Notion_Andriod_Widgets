@@ -24,24 +24,33 @@ class NotionAuthManagerTest {
     private lateinit var apiService: NotionApiService
     private lateinit var authManager: NotionAuthManager
 
-    private val storedValues = mutableMapOf<String, String?>()
+    private val storedStringValues = mutableMapOf<String, String?>()
+    private val storedLongValues = mutableMapOf<String, Long>()
 
     @Before
     fun setUp() {
         editor = mockk(relaxed = true)
         every { editor.putString(any(), any()) } answers {
-            storedValues[firstArg()] = secondArg()
+            storedStringValues[firstArg()] = secondArg()
+            editor
+        }
+        every { editor.putLong(any(), any()) } answers {
+            storedLongValues[firstArg()] = secondArg()
             editor
         }
         every { editor.remove(any()) } answers {
-            storedValues.remove(firstArg())
+            storedStringValues.remove(firstArg())
+            storedLongValues.remove(firstArg())
             editor
         }
 
         prefs = mockk()
         every { prefs.edit() } returns editor
         every { prefs.getString(any(), any()) } answers {
-            storedValues[firstArg()] ?: secondArg()
+            storedStringValues[firstArg()] ?: secondArg()
+        }
+        every { prefs.getLong(any(), any()) } answers {
+            storedLongValues[firstArg()] ?: secondArg()
         }
 
         apiService = mockk()
@@ -61,7 +70,7 @@ class NotionAuthManagerTest {
 
     @Test
     fun `getAccessToken returns saved token`() {
-        storedValues["notion_access_token"] = "my-token"
+        storedStringValues["notion_access_token"] = "my-token"
         assertEquals("my-token", authManager.getAccessToken())
     }
 
@@ -78,7 +87,7 @@ class NotionAuthManagerTest {
 
     @Test
     fun `getAuthMode returns OAUTH when saved`() {
-        storedValues["notion_auth_mode"] = "OAUTH"
+        storedStringValues["notion_auth_mode"] = "OAUTH"
         assertEquals(AuthMode.OAUTH, authManager.getAuthMode())
     }
 
@@ -100,7 +109,7 @@ class NotionAuthManagerTest {
 
     @Test
     fun `isAuthenticated returns true when token exists`() {
-        storedValues["notion_access_token"] = "some-token"
+        storedStringValues["notion_access_token"] = "some-token"
         assertTrue(authManager.isAuthenticated())
     }
 
@@ -145,5 +154,28 @@ class NotionAuthManagerTest {
         val result = authManager.exchangeOAuthCode("bad-code")
 
         assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `getSyncIntervalMinutes returns default when not set`() {
+        assertEquals(15L, authManager.getSyncIntervalMinutes())
+    }
+
+    @Test
+    fun `saveSyncIntervalMinutes stores value`() {
+        authManager.saveSyncIntervalMinutes(60L)
+        verify { editor.putLong("notion_sync_interval", 60L) }
+    }
+
+    @Test
+    fun `getSyncIntervalMinutes returns saved value`() {
+        storedLongValues["notion_sync_interval"] = 30L
+        assertEquals(30L, authManager.getSyncIntervalMinutes())
+    }
+
+    @Test
+    fun `onTokenExpired removes access token`() {
+        authManager.onTokenExpired()
+        verify { editor.remove("notion_access_token") }
     }
 }

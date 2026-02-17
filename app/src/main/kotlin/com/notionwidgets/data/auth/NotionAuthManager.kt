@@ -83,9 +83,23 @@ class NotionAuthManager @Inject constructor(
         }
     }
 
+    override fun getSyncIntervalMinutes(): Long {
+        return prefs.getLong(KEY_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL)
+    }
+
+    override fun saveSyncIntervalMinutes(minutes: Long) {
+        prefs.edit().putLong(KEY_SYNC_INTERVAL, minutes).apply()
+    }
+
+    override fun onTokenExpired() {
+        prefs.edit().remove(KEY_ACCESS_TOKEN).apply()
+    }
+
     companion object {
         private const val KEY_ACCESS_TOKEN = "notion_access_token"
         private const val KEY_AUTH_MODE = "notion_auth_mode"
         private const val KEY_DATABASE_ID = "notion_database_id"
+        private const val KEY_SYNC_INTERVAL = "notion_sync_interval"
+        const val DEFAULT_SYNC_INTERVAL = 15L
     }
 }

@@ -11,4 +11,7 @@ interface AuthManager {
     fun clearAuth()
     suspend fun exchangeOAuthCode(code: String): Result<String>
     fun getOAuthAuthorizeUrl(): String
+    fun getSyncIntervalMinutes(): Long
+    fun saveSyncIntervalMinutes(minutes: Long)
+    fun onTokenExpired()
 }

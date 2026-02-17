@@ -1,7 +1,6 @@
 package com.notionwidgets.widget
 
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -37,14 +36,15 @@ class WidgetSyncWorker @AssistedInject constructor(
     companion object {
         private const val WORK_NAME = "widget_sync"
 
-        fun enqueue(context: Context) {
+        fun enqueue(context: Context, intervalMinutes: Long = 15L) {
+            val interval = intervalMinutes.coerceAtLeast(15L)
             val request = PeriodicWorkRequestBuilder<WidgetSyncWorker>(
-                15, TimeUnit.MINUTES
+                interval, TimeUnit.MINUTES
             ).build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
         }
