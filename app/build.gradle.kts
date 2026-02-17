@@ -86,7 +86,18 @@ tasks.register<JacocoReport>("jacocoTestReport") {
             "**/*_MembersInjector.*",
             "**/*Module_*.*",
             "**/*_Impl*.*",
-            "**/*Database_Impl*.*"
+            "**/*Database_Impl*.*",
+            // Compose/Glance UI (requires instrumentation tests, not unit tests)
+            "**/*ScreenKt*",
+            "**/*ContentKt*",
+            "**/ComposableSingletons*",
+            "**/ThemeKt*",
+            "**/NavigationKt*",
+            // DI modules (wiring only, tested via integration)
+            "**/di/**",
+            // Widget UI and receiver (requires device)
+            "**/widget/TodoWidgetReceiver*",
+            "**/widget/TodoGlanceWidget\$provideGlance*"
         )
     }
     val execData = fileTree(project.layout.buildDirectory.get()) {
