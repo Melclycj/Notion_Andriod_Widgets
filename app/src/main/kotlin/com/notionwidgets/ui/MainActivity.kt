@@ -13,6 +13,9 @@ import androidx.navigation.compose.rememberNavController
 import com.notionwidgets.data.auth.AuthManager
 import com.notionwidgets.ui.theme.NotionWidgetsTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -21,9 +24,20 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var authManager: AuthManager
 
+    private val _oauthCode = MutableStateFlow<String?>(null)
+    val oauthCode: StateFlow<String?> = _oauthCode.asStateFlow()
+
+    fun consumeOAuthCode(): String? {
+        val code = _oauthCode.value
+        _oauthCode.value = null
+        return code
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        handleOAuthIntent(intent)
 
         val startRoute = if (authManager.isAuthenticated()) {
             if (authManager.getSelectedDatabaseId() != null) {
@@ -47,8 +61,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        handleOAuthIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -60,8 +72,7 @@ class MainActivity : ComponentActivity() {
         val uri = intent?.data ?: return
         if (uri.scheme == "notionwidgets" && uri.host == "auth") {
             val code = uri.getQueryParameter("code") ?: return
-            // The LoginViewModel will handle this via the navigation state
-            // For now, store the code so the ViewModel can pick it up
+            _oauthCode.value = code
             intent.data = null
         }
     }

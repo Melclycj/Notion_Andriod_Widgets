@@ -1,5 +1,6 @@
 package com.notionwidgets.ui.auth
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notionwidgets.data.auth.AuthMode
+import com.notionwidgets.ui.MainActivity
 
 @Composable
 fun LoginScreen(
@@ -36,6 +38,24 @@ fun LoginScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = context as? MainActivity
+
+    LaunchedEffect(Unit) {
+        val code = activity?.consumeOAuthCode()
+        if (code != null) {
+            viewModel.handleOAuthCallback(code)
+        }
+    }
+
+    if (activity != null) {
+        val pendingCode by activity.oauthCode.collectAsState()
+        LaunchedEffect(pendingCode) {
+            val code = activity.consumeOAuthCode()
+            if (code != null) {
+                viewModel.handleOAuthCallback(code)
+            }
+        }
+    }
 
     LaunchedEffect(state.isAuthenticated) {
         if (state.isAuthenticated) {
